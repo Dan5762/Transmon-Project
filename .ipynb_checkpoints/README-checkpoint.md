@@ -31,7 +31,7 @@ The code is divided between circuit models and analytics, with the vast majority
      - Single three junction capacitively shunted qubit
      - Limited time spent on this circuit so far
 
-The circuit model notebooks typically have a system class which describes characterises the quantum system, they then use this class to inspect properties of the circuit in certain parameter regimes. The simplest example of such a system class is in the flux qubit notebook.
+The circuit model notebooks typically have a system class which describes characterises the quantum system, they then use this class to inspect properties of the circuit in certain parameter regimes.
 
 ## Useful Papers
 

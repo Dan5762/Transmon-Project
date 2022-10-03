@@ -1,0 +1,9 @@
+matplotlib
+numpy
+scipy
+scikit-learn
+qutip
+tdqm
+SciencePlots
+adjustText
+git+https://github.com/fmfn/BayesianOptimization
