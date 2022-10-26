@@ -387,24 +387,76 @@ class DCCircuit:
             try:
                 self.evals_p
             except AttributeError:
-                self.diagonalise_p()()
+                self.diagonalise_p()
 
-        return (self.evals_p[1] - self.evals_p[0]) / self.hbar
+        return (self.evals_p[1] - self.evals_p[0]) / self.h
     
+    def calc_T1(self, ng0=0.25, flux0=0.5, diff_param=0.001, update=True):
+        self.ng = ng0
+        self.flux = flux0
+        self.init_qubit_states(update=True)
+        omega01 = self.calc_omega01()
+
+        self.ng = ng0 + 0.5 * diff_param
+        self.init_qubit_states(update=True)
+        D_high = self.hc(self.probe_1_eb).dot(self.get_H_p().dot(self.probe_0_eb)).toarray()[0][0]
+
+        self.ng = ng0 - 0.5 * diff_param
+        self.init_qubit_states(update=True)
+        D_low = self.hc(self.probe_1_eb).dot(self.get_H_p().dot(self.probe_0_eb)).toarray()[0][0]
+
+        dH = (D_high - D_low) / diff_param
+        print(dH / self.h)
+        print((5.2)**2 * omega01)
+
+        gamma_1 = (2 / self.h**2) * self.mod_squared(dH) * (5.2)**2 * omega01
+
+        self.ng = ng0
+
+        self.flux = flux0 + 0.5 * diff_param
+        self.init_qubit_states(update=True)
+        D_high = self.hc(self.probe_1_eb).dot(self.get_H_p().dot(self.probe_0_eb)).toarray()[0][0]
+
+        self.flux = flux0 - 0.5 * diff_param
+        self.init_qubit_states(update=True)
+        D_low = self.hc(self.probe_1_eb).dot(self.get_H_p().dot(self.probe_0_eb)).toarray()[0][0]
+
+        dH = (D_high - D_low) / diff_param
+        print(dH / self.h)
+
+        print(gamma_1)
+        # gamma_1 += (2 / self.h**2) * self.mod_squared(dH) * (5.2)**2 * omega01
+        # print(gamma_1)
+
+        return 1 / gamma_1
+    
+    def calc_Tphi(self):
+        self.calc_D()
+
+        A = 1e-4
+        omega_low = 1
+        omega_high = 3e9
+        t_exp = 10e-6
+
+        gamma_phi = 2 * A**2 * self.D_omega01**2 * np.abs(np.log(omega_low * t_exp))
+        gamma_phi += 2 * A**4 * self.D2_omega01**2 * (np.log(omega_high/omega_low)**2 + np.log(omega_low * t_exp)**2)
+        gamma_phi = np.sqrt(gamma_phi)
+
+        return 1 / gamma_phi
+    
+    def calc_T2(self):
+
+        T1 = self.calc_T1()
+        Tphi = self.calc_T2()
+
+        gamma_t2 = (1 / (2 * T1)) + (1 / Tphi)
+
+        return 1 / gamma_t2
+
     def calc_D(self, ng0=0.5, diff_param=0.01):
-        self.ng=0
+        self.ng = ng0
         self.init_qubit_states(update=True)
         H_p = self.get_H_p()
-
-        state_p = self.probe_p_eb.copy()
-        state_ip = self.probe_ip_eb.copy()
-        state_1 = self.probe_1_eb.copy()
-
-        H_x = self.hc(state_p).dot(H_p.dot(state_p)).toarray()[0][0]
-        H_y = self.hc(state_ip).dot(H_p.dot(state_ip)).toarray()[0][0]
-        H_z = self.hc(state_1).dot(H_p.dot(state_1)).toarray()[0][0]
-
-        self.omega_01 = np.sqrt(self.mod_squared(H_x) + self.mod_squared(H_y) + self.mod_squared(H_z))
 
         self.ng = ng0 + 0.5 * diff_param
         evals_high, _ = self.diagonalise_p(update=True)
@@ -416,13 +468,30 @@ class DCCircuit:
         
         self.D_omega01 = np.abs(omega01_high - omega01_low) / diff_param
 
+        self.ng = ng0
+        evals, _ = self.diagonalise_p(update=True)
+        omega01 = (evals[1] - evals[0]) / self.hbar
+
+        self.ng = ng0 + diff_param
+        evals_high, _ = self.diagonalise_p(update=True)
+        omega01_high = (evals_high[1] - evals_high[0]) / self.hbar
+
+        self.ng = ng0 - diff_param
+        evals_low, _ = self.diagonalise_p(update=True)
+        omega01_low = (evals_low[1] - evals_low[0]) / self.hbar
+        
+        self.D2_omega01 = np.abs(omega01_high - 2 * omega01 + omega01_low) / diff_param**2
+
+        self.ng = ng0
+        self.diagonalise_p(update=True)
+
         self.ng = ng0 + 0.5 * diff_param
-        H_p = self.get_H_p()
-        H_z_high = self.hc(self.probe_1_eb).dot(H_p.dot(self.probe_1_eb)).toarray()[0][0]
+        H_p_high = self.get_H_p()
+        H_z_high = self.hc(self.probe_1_eb).dot(H_p_high.dot(self.probe_1_eb)).toarray()[0][0]
 
         self.ng = ng0 - 0.5 * diff_param
-        H_p = self.get_H_p()
-        H_z_low = self.hc(self.probe_1_eb).dot(H_p.dot(self.probe_1_eb)).toarray()[0][0]
+        H_p_low = self.get_H_p()
+        H_z_low = self.hc(self.probe_1_eb).dot(H_p_low.dot(self.probe_1_eb)).toarray()[0][0]
 
         self.D_z = np.sqrt(self.mod_squared((H_z_high - H_z_low) / diff_param)) / self.h
 
