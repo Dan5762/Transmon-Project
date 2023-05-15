@@ -6,4 +6,5 @@ qutip
 tdqm
 SciencePlots
 adjustText
+SciencePlots
 git+https://github.com/fmfn/BayesianOptimization
