@@ -452,7 +452,7 @@ class DCCircuit:
         # gamma_1 += (2 / self.h**2) * self.mod_squared(dH) * (5.2)**2 * omega01
         # print(gamma_1)
 
-        capacitances = [self.Cjp]*2 + [self.alpha * self.Cjp]*2
+        capacitances = [self.Cjp] * 2 + [self.alpha * self.Cjp] * 2
         loss_rate = 0
         for capacitance in capacitances:
             loss_rate += self.calc_capacitive_loss_rate(capacitance, omega01)
@@ -468,7 +468,7 @@ class DCCircuit:
         t_exp = 10e-6
 
         gamma_phi = 2 * A**2 * self.D_omega01**2 * np.abs(np.log(omega_low * t_exp))
-        gamma_phi += 2 * A**4 * self.D2_omega01**2 * (np.log(omega_high/omega_low)**2 + np.log(omega_low * t_exp)**2)
+        gamma_phi += 2 * A**4 * self.D2_omega01**2 * (np.log(omega_high / omega_low)**2 + np.log(omega_low * t_exp)**2)
         gamma_phi = np.sqrt(gamma_phi)
 
         return 1 / gamma_phi
@@ -552,7 +552,7 @@ class DCCircuit:
 
 
 class DCCircuitAlphaDisp:
-    def __init__(self, Ejp=153e9, Ejt=21.3e9, Cjp=12e-15, Cjt=36e-15, Cc=3.1e-15, Ct=18e-15, alphas=[0.25]*2, ng=0.12, flux=0.5, ncut=2):
+    def __init__(self, Ejp=153e9, Ejt=21.3e9, Cjp=12e-15, Cjt=36e-15, Cc=3.1e-15, Ct=18e-15, alphas=[0.25] * 2, ng=0.12, flux=0.5, ncut=2):
         self.h = 6.626e-34
         self.hbar = 1.055e-34
         self.e_charge = 1.60218e-19

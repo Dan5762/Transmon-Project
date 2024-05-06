@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 class RCCircuit:
-    def __init__(self, EJ=121e9, CJ=8e-15, Cr=100e-15, Cc=5e-15, Lr=10e-9, alphas=[0.4]*4, ng=0.25, flux=0.5, ncut=2, mcut=20):
+    def __init__(self, EJ=121e9, CJ=8e-15, Cr=100e-15, Cc=5e-15, Lr=10e-9, alphas=[0.4] * 4, ng=0.25, flux=0.5, ncut=2, mcut=20):
         self.h = 6.626e-34
         self.hbar = 1.055e-34
         self.e_charge = 1.60218e-19
@@ -31,7 +31,7 @@ class RCCircuit:
         print(f'Cr:    {self.Cr}')
         print(f'Cc:    {self.Cc}')
         print(f'Lr:    {self.Lr}')
-        print(f'alpha: {self.alpha}')
+        print(f'alpha: {self.alphas[0]}')
         print(f'ng:    {self.ng}')
         print(f'flux:  {self.flux}')
 
@@ -169,15 +169,19 @@ class RCCircuit:
     def get_H_q_coupling(self):
         self.init_operators()
 
-        Cr_renorm = (2 * self.alpha * self.CJ * (self.Cc + self.Cr) + (1 + self.alpha) * self.Cr * self.Cc) / (2 * self.alpha * self.CJ + (1 + self.alpha) * self.Cc)
+        # Raise error if alphas aren't all the same
+        if not self.alphas[0] == self.alphas[1] == self.alphas[2] == self.alphas[3]:
+            raise Exception('Alphas must be equal to calculate Hq coupling')
+
+        Cr_renorm = (2 * self.alphas[0] * self.CJ * (self.Cc + self.Cr) + (1 + self.alphas[0]) * self.Cr * self.Cc) / (2 * self.alphas[0] * self.CJ + (1 + self.alphas[0]) * self.Cc)
         Zr_renorm = np.sqrt(self.Lr / Cr_renorm)
         coeff = (self.hbar / (2 * Zr_renorm))**0.5
 
         Csum = self.Cr + self.Cc
-        C0 = np.sqrt((1 + self.alpha) * (2 * self.alpha * self.CJ * Csum + (1 + self.alpha) * self.Cr * self.Cc))
+        C0 = np.sqrt((1 + self.alphas[0]) * (2 * self.alphas[0] * self.CJ * Csum + (1 + self.alphas[0]) * self.Cr * self.Cc))
 
-        self.H_q_coupling = self.alpha * (1 + self.alpha) * (self.Cc / C0**2) * (self.q1_q + self.q2_q)
-        self.H_q_coupling += (1 + self.alpha)**2 * (self.Cc / C0**2) * self.q3_q
+        self.H_q_coupling = self.alphas[0] * (1 + self.alphas[0]) * (self.Cc / C0**2) * (self.q1_q + self.q2_q)
+        self.H_q_coupling += (1 + self.alphas[0])**2 * (self.Cc / C0**2) * self.q3_q
 
         self.H_q_coupling = coeff * self.H_q_coupling
 
@@ -374,19 +378,19 @@ class RCCircuit:
         return omega
 
     def calc_bil_omega(self):
-        Cr_renorm = (2 * self.alpha * self.CJ * (self.Cc + self.Cr) + (1 + self.alpha) * self.Cr * self.Cc) / (2 * self.alpha * self.CJ + (1 + self.alpha) * self.Cc)
+        Cr_renorm = (2 * self.alphas[0] * self.CJ * (self.Cc + self.Cr) + (1 + self.alphas[0]) * self.Cr * self.Cc) / (2 * self.alphas[0] * self.CJ + (1 + self.alphas[0]) * self.Cc)
         omega_exp = self.hbar / np.sqrt(self.Lr * Cr_renorm)
 
         return omega_exp
 
     def calc_bil_coupling(self, update=False):
-        C0 = np.sqrt((1 + self.alpha) * (2 * self.alpha * self.CJ * (self.Cr + self.Cc) + (1 + self.alpha) * self.Cr * self.Cc))
+        C0 = np.sqrt((1 + self.alphas[0]) * (2 * self.alphas[0] * self.CJ * (self.Cr + self.Cc) + (1 + self.alphas[0]) * self.Cr * self.Cc))
 
-        Cr_renorm = (2 * self.alpha * self.CJ * (self.Cc + self.Cr) + (1 + self.alpha) * self.Cr * self.Cc) / (2 * self.alpha * self.CJ + (1 + self.alpha) * self.Cc)
+        Cr_renorm = (2 * self.alphas[0] * self.CJ * (self.Cc + self.Cr) + (1 + self.alphas[0]) * self.Cr * self.Cc) / (2 * self.alphas[0] * self.CJ + (1 + self.alphas[0]) * self.Cc)
         Zr_renorm = np.sqrt(self.Lr / Cr_renorm)
         coeff = np.sqrt(self.hbar / (2 * Zr_renorm))
 
-        coupling_op = self.alpha * (1 + self.alpha) * (self.Cc / C0**2) * (self.q1_q + self.q2_q) + (1 + self.alpha)**2 * (self.Cc / C0**2) * self.q3_q
+        coupling_op = self.alphas[0] * (1 + self.alphas[0]) * (self.Cc / C0**2) * (self.q1_q + self.q2_q) + (1 + self.alphas[0])**2 * (self.Cc / C0**2) * self.q3_q
 
         if update:
             self.init_qubit_states(update=True)
@@ -403,7 +407,7 @@ class RCCircuit:
 
 
 class RCCircuitAlphaDisp:
-    def __init__(self, Ejp=153e9, Ejt=21.3e9, Cjp=12e-15, Cjt=36e-15, Cc=3.1e-15, Ct=18e-15, alphas=[0.25]*2, ng=0.12, flux=0.5, ncut=2):
+    def __init__(self, Ejp=153e9, Ejt=21.3e9, Cjp=12e-15, Cjt=36e-15, Cc=3.1e-15, Ct=18e-15, alphas=[0.25] * 2, ng=0.12, flux=0.5, ncut=2):
         self.h = 6.626e-34
         self.hbar = 1.055e-34
         self.e_charge = 1.60218e-19
